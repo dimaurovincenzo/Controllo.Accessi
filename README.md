@@ -121,7 +121,6 @@ Visita `http://localhost:5000` nel tuo browser.
 | ----------- | ------------------------------------------------------------ |
 | Super Admin | Accesso completo, gestione avanzata, reset DB, modifica dati |
 | Admin       | Gestione utenti, QR code, accessi e statistiche              |
-| Operatore   | Generazione/scansione QR code, visualizzazione statistiche   |
 | Utente      | Scansione QR code, modifica password                         |
 
 ---
