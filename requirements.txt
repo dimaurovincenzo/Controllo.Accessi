@@ -1,0 +1,47 @@
+# Dipendenze per il Sistema di Controllo Accessi con QR Code
+
+# Flask e estensioni
+Flask==2.3.3
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.27
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+Flask-Migrate==4.0.5
+email-validator==2.1.0.post1
+Flask-Bcrypt==1.0.1
+
+# QR Code
+qrcode==7.4.2
+Pillow==10.1.0
+
+# Utilità
+python-dotenv==1.0.0
+Werkzeug==2.3.7
+itsdangerous==2.1.2
+Jinja2==3.1.2
+click==8.1.7
+
+# Supporto database
+pymysql==1.1.0  # Per MySQL
+psycopg2-binary==2.9.9  # Per PostgreSQL
+
+# Nuove dipendenze
+alembic==1.12.0
+bcrypt==4.0.1
+dnspython==2.4.2
+dominate==2.8.0
+Flask-Bootstrap==3.3.7.1
+Flask-Testing==0.8.1
+gunicorn==21.2.0
+idna==3.4
+Mako==1.2.4
+MarkupSafe==2.1.3
+packaging==23.1
+pycparser==2.21
+pypng==0.20220715.0
+python-dateutil==2.8.2
+requests==2.31.0
+six==1.16.0
+typing_extensions==4.7.1
+visitor==0.1.3
+WTForms==3.0.1 

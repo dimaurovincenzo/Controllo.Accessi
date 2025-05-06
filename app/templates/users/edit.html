@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">
+            <i class="fas fa-user-edit me-2"></i>
+            {% if user %}Modifica Utente{% else %}Crea Nuovo Utente{% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.nome.label(class="form-label") }}
+                                {{ form.nome(class="form-control", placeholder="Nome") }}
+                                {% for error in form.nome.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.cognome.label(class="form-label") }}
+                                {{ form.cognome(class="form-control", placeholder="Cognome") }}
+                                {% for error in form.cognome.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control", placeholder="Email") }}
+                        {% for error in form.email.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.role.label(class="form-label") }}
+                                {{ form.role(class="form-select") }}
+                                {% for error in form.role.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check mt-4">
+                                {{ form.is_active(class="form-check-input") }}
+                                {{ form.is_active.label(class="form-check-label") }}
+                                {% for error in form.is_active.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="mb-3">
+                        <h5>{% if user %}Cambia Password{% else %}Imposta Password{% endif %}</h5>
+                        <div class="form-text mb-3">
+                            {% if user %}Lascia vuoto se non vuoi cambiare la password.{% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.password.label(class="form-label") }}
+                                    {{ form.password(class="form-control", placeholder="Password") }}
+                                    {% for error in form.password.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.password2.label(class="form-label") }}
+                                    {{ form.password2(class="form-control", placeholder="Conferma password") }}
+                                    {% for error in form.password2.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('users.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Torna alla lista
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-light mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Informazioni</h5>
+                <p class="card-text">
+                    {% if user %}
+                    Stai modificando un utente esistente. I campi sono precompilati con i valori attuali.
+                    {% else %}
+                    Stai creando un nuovo utente. Tutti i campi sono obbligatori eccetto la password.
+                    {% endif %}
+                </p>
+                <p class="card-text">
+                    <strong>Ruoli:</strong>
+                    <ul>
+                        <li><strong>Utente:</strong> Può visualizzare i propri dati e QR code</li>
+                        <li><strong>Operatore:</strong> Può generare QR code e registrare accessi</li>
+                        <li><strong>Amministratore:</strong> Ha accesso completo al sistema</li>
+                    </ul>
+                </p>
+            </div>
+        </div>
+        
+        {% if user %}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">QR Code associati</h5>
+            </div>
+            <div class="card-body">
+                {% if user.qr_codes.count() %}
+                <ul class="list-group list-group-flush">
+                    {% for qr in user.qr_codes.all() %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('qr_codes.view', id=qr.id) }}">
+                            {{ qr.description }}
+                        </a>
+                        {% if qr.is_active %}
+                        <span class="badge bg-success">Attivo</span>
+                        {% else %}
+                        <span class="badge bg-danger">Disattivato</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Nessun QR code associato.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

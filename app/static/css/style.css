@@ -1,0 +1,148 @@
+/* 
+ * Sistema di Controllo Accessi con QR Code
+ * Stili personalizzati
+ */
+
+/* Generali */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+/* Header */
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Titoli */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+/* Card personalizzate */
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    font-weight: 600;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Bottoni */
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Tabelle */
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+/* QR Code */
+.qr-code-display {
+    padding: 1rem;
+    text-align: center;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    display: inline-block;
+    margin: 0 auto;
+}
+
+.qr-code-display img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Footer */
+.footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    font-size: 0.875rem;
+    padding: 1.5rem 0;
+}
+
+/* Form personalizzati */
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Pagina di login */
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 140px);
+}
+
+.login-form {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Dashboard */
+.stats-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.stats-card .stats-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #0d6efd;
+}
+
+.stats-card .stats-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stats-card .stats-label {
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+/* Animazioni */
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Media queries per responsive */
+@media (max-width: 768px) {
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+} 

@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-users me-2"></i>Gestione Utenti</h1>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i> Nuovo Utente
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Cerca Utenti</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('users.index') }}" class="row g-3">
+                    <div class="col-md-4">
+                        {{ search_form.search.label(class="form-label") }}
+                        {{ search_form.search(class="form-control", placeholder="Nome, cognome o email") }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ search_form.role.label(class="form-label") }}
+                        {{ search_form.role(class="form-select") }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ search_form.is_active.label(class="form-label") }}
+                        {{ search_form.is_active(class="form-select") }}
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i> Cerca
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Cognome</th>
+                                <th>Email</th>
+                                <th>Ruolo</th>
+                                <th>Stato</th>
+                                <th>Data Creazione</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.nome }}</td>
+                                <td>{{ user.cognome }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    {% if user.role == 'admin' %}
+                                    <span class="badge bg-danger">Amministratore</span>
+                                    {% elif user.role == 'operator' %}
+                                    <span class="badge bg-warning">Operatore</span>
+                                    {% else %}
+                                    <span class="badge bg-info">Utente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.is_active %}
+                                    <span class="badge bg-success">Attivo</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Disattivato</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.creation_date.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('users.edit', id=user.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        
+                                        {% if user.id != current_user.id %}
+                                        <a href="{{ url_for('users.toggle_active', id=user.id) }}" class="btn btn-sm {% if user.is_active %}btn-danger{% else %}btn-success{% endif %}" 
+                                           onclick="return confirm('Sei sicuro di voler {% if user.is_active %}disattivare{% else %}attivare{% endif %} questo utente?')">
+                                            <i class="fas {% if user.is_active %}fa-ban{% else %}fa-check{% endif %}"></i>
+                                        </a>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled title="Non puoi disattivare il tuo account">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginazione -->
+                {% if pagination.pages > 1 %}
+                <nav aria-label="Paginazione Utenti">
+                    <ul class="pagination justify-content-center">
+                        {% for page in pagination.iter_pages() %}
+                            {% if page %}
+                                {% if page != pagination.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('users.index', page=page, **request.args) }}">{{ page }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Nessun utente trovato con i criteri di ricerca specificati.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

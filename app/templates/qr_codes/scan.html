@@ -1,0 +1,427 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<!-- jsQR per la scansione dei QR code -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<style>
+    #video-container {
+        position: relative;
+        width: 100%;
+        max-width: 640px;
+        margin: 0 auto;
+    }
+    
+    #qr-canvas {
+        width: 100%;
+        height: auto;
+    }
+    
+    #qr-frame {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 2px solid #3498db;
+        box-sizing: border-box;
+        pointer-events: none;
+    }
+    
+    .scanner-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+    }
+    
+    .scanner-laser {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 2px;
+        background: #f00;
+        z-index: 2;
+        box-shadow: 0 0 4px #f00;
+        display: none;
+        animation: scanning 2s infinite;
+    }
+    
+    .scanning .scanner-laser {
+        display: block;
+    }
+    
+    @keyframes scanning {
+        0% { top: 20%; }
+        50% { top: 80%; }
+        100% { top: 20%; }
+    }
+    
+    #result-container {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4"><i class="fas fa-camera me-2"></i>Scansiona QR Code</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-camera me-2"></i>Scanner QR Code</h5>
+            </div>
+            <div class="card-body text-center">
+                <div id="scanner-container">
+                    <div id="video-container">
+                        <video id="qr-video" class="img-fluid" autoplay="true"></video>
+                        <canvas id="qr-canvas" style="display: none;"></canvas>
+                        <div class="scanner-overlay scanning">
+                            <div class="scanner-laser"></div>
+                        </div>
+                    </div>
+                    <div class="my-3">
+                        <button id="start-button" class="btn btn-primary">
+                            <i class="fas fa-play me-1"></i> Avvia Camera
+                        </button>
+                        <button id="stop-button" class="btn btn-danger" style="display: none;">
+                            <i class="fas fa-stop me-1"></i> Ferma Camera
+                        </button>
+                        
+                        <div class="mt-2">
+                            <button id="switch-camera-button" class="btn btn-outline-secondary" style="display: none;">
+                                <i class="fas fa-sync me-1"></i> Cambia Camera
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alert alert-info" id="status-message">
+                        <i class="fas fa-info-circle me-2"></i> Premi 'Avvia Camera' per iniziare la scansione.
+                    </div>
+                </div>
+                
+                <div id="result-container" class="mt-4">
+                    <div class="alert alert-success">
+                        <h4 class="alert-heading"><i class="fas fa-check-circle me-2"></i>QR Code rilevato!</h4>
+                        <p id="qr-description" class="mb-0"></p>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Dettagli</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl>
+                                        <dt>ID QR</dt>
+                                        <dd id="qr-id"></dd>
+                                        
+                                        <dt>Descrizione</dt>
+                                        <dd id="qr-desc"></dd>
+                                        
+                                        <dt>Data creazione</dt>
+                                        <dd id="qr-created"></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl id="user-info-container">
+                                        <dt>Utente</dt>
+                                        <dd id="user-name"></dd>
+                                        
+                                        <dt>Email</dt>
+                                        <dd id="user-email"></dd>
+                                    </dl>
+                                    
+                                    <dl id="location-info-container" style="display: none;">
+                                        <dt>Posizione</dt>
+                                        <dd id="location-coords"></dd>
+                                        
+                                        <dt>Indirizzo</dt>
+                                        <dd id="location-address"></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 mt-3">
+                                <button id="scan-again-button" class="btn btn-primary">
+                                    <i class="fas fa-qrcode me-1"></i> Scansiona un altro QR code
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('qr-video');
+        const canvas = document.getElementById('qr-canvas');
+        const startButton = document.getElementById('start-button');
+        const stopButton = document.getElementById('stop-button');
+        const switchCameraButton = document.getElementById('switch-camera-button');
+        const scannerContainer = document.getElementById('scanner-container');
+        const resultContainer = document.getElementById('result-container');
+        const statusMessage = document.getElementById('status-message');
+        const scanAgainButton = document.getElementById('scan-again-button');
+        
+        let scanning = false;
+        let videoStream = null;
+        let canvasContext = null;
+        let currentCameraIndex = 0;
+        let availableCameras = [];
+        
+        // Check navigator.mediaDevices support
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            statusMessage.classList.remove('alert-info');
+            statusMessage.classList.add('alert-danger');
+            statusMessage.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> Il tuo browser non supporta l\'accesso alla camera. Prova con Chrome o Firefox.';
+            startButton.disabled = true;
+            return;
+        }
+        
+        // Get available cameras
+        async function listCameras() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+            
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            if (videoDevices.length > 1) {
+                switchCameraButton.style.display = 'inline-block';
+            }
+            
+            return videoDevices;
+        }
+        
+        // Start camera
+        async function startCamera() {
+            try {
+                availableCameras = await listCameras();
+                
+                const constraints = {
+                    video: {
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+                
+                if (availableCameras.length > 0 && availableCameras[currentCameraIndex].deviceId) {
+                    constraints.video.deviceId = { exact: availableCameras[currentCameraIndex].deviceId };
+                }
+                
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = videoStream;
+                
+                // Wait for video to be ready
+                video.onloadedmetadata = () => {
+                    canvasContext = canvas.getContext('2d');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    scanning = true;
+                    startButton.style.display = 'none';
+                    stopButton.style.display = 'inline-block';
+                    statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Scanner attivo, inquadra un QR code...';
+                    
+                    // Start scanning
+                    scanQRCode();
+                };
+                
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                statusMessage.classList.remove('alert-info');
+                statusMessage.classList.add('alert-danger');
+                statusMessage.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> Errore nell\'accesso alla camera: ' + error.message;
+            }
+        }
+        
+        // Stop camera
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => {
+                    track.stop();
+                });
+                video.srcObject = null;
+                videoStream = null;
+            }
+            
+            scanning = false;
+            startButton.style.display = 'inline-block';
+            stopButton.style.display = 'none';
+            statusMessage.innerHTML = '<i class="fas fa-info-circle me-2"></i> Scanner fermato. Premi \'Avvia Camera\' per iniziare la scansione.';
+        }
+        
+        // Switch camera
+        async function switchCamera() {
+            if (videoStream) {
+                stopCamera();
+                currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+                await startCamera();
+            }
+        }
+        
+        // Scan QR code
+        function scanQRCode() {
+            if (!scanning) return;
+            
+            // Draw video frame to canvas
+            canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Get image data from canvas
+            const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Decode QR code
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert",
+            });
+            
+            if (code) {
+                // QR code found
+                console.log("QR Code detected:", code.data);
+                
+                // Process the QR code data (UUID)
+                processQRCode(code.data);
+                stopCamera();
+            } else {
+                // Continue scanning
+                requestAnimationFrame(scanQRCode);
+            }
+        }
+        
+        // Process QR code
+        function processQRCode(uuid) {
+            const formData = new FormData();
+            formData.append('qr_uuid', uuid);
+            
+            statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Elaborazione QR code e acquisizione posizione...';
+            
+            // Ottieni la posizione geografica
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    // Successo
+                    function(position) {
+                        formData.append('latitude', position.coords.latitude);
+                        formData.append('longitude', position.coords.longitude);
+                        sendQRCodeData(formData);
+                    },
+                    // Errore
+                    function(error) {
+                        console.warn('Errore di geolocalizzazione:', error.message);
+                        // Continua senza dati di posizione
+                        sendQRCodeData(formData);
+                    },
+                    // Opzioni
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            } else {
+                // Geolocalizzazione non supportata
+                console.warn('Geolocalizzazione non supportata dal browser');
+                sendQRCodeData(formData);
+            }
+        }
+        
+        // Invia i dati del QR code al server
+        function sendQRCodeData(formData) {
+            fetch("{{ url_for('qr_codes.scan') }}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success result
+                    document.getElementById('qr-description').textContent = data.message;
+                    document.getElementById('qr-id').textContent = data.qr_info.id;
+                    document.getElementById('qr-desc').textContent = data.qr_info.description;
+                    document.getElementById('qr-created').textContent = data.qr_info.creation_date;
+                    
+                    // Gestione informazioni utente
+                    const userInfoContainer = document.getElementById('user-info-container');
+                    if (data.qr_info.user && Object.keys(data.qr_info.user).length > 0) {
+                        document.getElementById('user-name').textContent = `${data.qr_info.user.nome} ${data.qr_info.user.cognome}`;
+                        document.getElementById('user-email').textContent = data.qr_info.user.email;
+                        userInfoContainer.style.display = 'block';
+                    } else {
+                        userInfoContainer.style.display = 'none';
+                    }
+                    
+                    // Gestione informazioni posizione
+                    const locationInfoContainer = document.getElementById('location-info-container');
+                    if (data.location) {
+                        document.getElementById('location-coords').textContent = 
+                            `${data.location.latitude.toFixed(6)}, ${data.location.longitude.toFixed(6)}`;
+                        
+                        if (data.location.address) {
+                            document.getElementById('location-address').textContent = data.location.address;
+                        } else {
+                            document.getElementById('location-address').textContent = 'Indirizzo non disponibile';
+                        }
+                        
+                        // Aggiungi link a Google Maps
+                        const addressElement = document.getElementById('location-address');
+                        const mapLink = document.createElement('a');
+                        mapLink.href = `https://www.google.com/maps?q=${data.location.latitude},${data.location.longitude}`;
+                        mapLink.target = '_blank';
+                        mapLink.className = 'btn btn-sm btn-outline-primary mt-2';
+                        mapLink.innerHTML = '<i class="fas fa-map-marker-alt me-1"></i> Visualizza su Google Maps';
+                        addressElement.appendChild(document.createElement('br'));
+                        addressElement.appendChild(mapLink);
+                        
+                        locationInfoContainer.style.display = 'block';
+                    } else {
+                        locationInfoContainer.style.display = 'none';
+                    }
+                    
+                    scannerContainer.style.display = 'none';
+                    resultContainer.style.display = 'block';
+                } else {
+                    // Show error
+                    stopCamera();
+                    statusMessage.classList.remove('alert-info');
+                    statusMessage.classList.add('alert-danger');
+                    statusMessage.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> Errore: ' + data.message;
+                    startButton.style.display = 'inline-block';
+                }
+            })
+            .catch(error => {
+                console.error('Error processing QR code:', error);
+                stopCamera();
+                statusMessage.classList.remove('alert-info');
+                statusMessage.classList.add('alert-danger');
+                statusMessage.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> Errore nella comunicazione con il server.';
+                startButton.style.display = 'inline-block';
+            });
+        }
+        
+        // Event listeners
+        startButton.addEventListener('click', startCamera);
+        stopButton.addEventListener('click', stopCamera);
+        switchCameraButton.addEventListener('click', switchCamera);
+        
+        scanAgainButton.addEventListener('click', function() {
+            scannerContainer.style.display = 'block';
+            resultContainer.style.display = 'none';
+            statusMessage.classList.remove('alert-danger');
+            statusMessage.classList.add('alert-info');
+            statusMessage.innerHTML = '<i class="fas fa-info-circle me-2"></i> Premi \'Avvia Camera\' per iniziare la scansione.';
+        });
+    });
+</script>
+{% endblock %}

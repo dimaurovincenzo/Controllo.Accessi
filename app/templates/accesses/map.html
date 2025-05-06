@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<!-- Leaflet CSS e JS per le mappe -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Leaflet MarkerCluster per raggruppare i marker -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+<style>
+    #map {
+        height: 600px;
+        width: 100%;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    .map-filters {
+        margin-bottom: 20px;
+        padding: 15px;
+        border-radius: 4px;
+    }
+    .marker-info {
+        font-size: 1rem;
+    }
+    .marker-info h5 {
+        margin-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+    }
+    .marker-info dl {
+        margin-bottom: 0.5rem;
+    }
+    .marker-info dt {
+        font-weight: bold;
+    }
+    .marker-info dd {
+        margin-bottom: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-map-marked-alt me-2"></i>Mappa Accessi</h1>
+            <div>
+                <a href="{{ url_for('accesses.index') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-list me-1"></i> Elenco Accessi
+                </a>
+                <a href="{{ url_for('accesses.statistics') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-chart-bar me-1"></i> Statistiche
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card map-filters">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtra Accessi sulla Mappa</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('accesses.map_view') }}" class="row g-3">
+                    <div class="col-md-2">
+                        <label for="qr_id" class="form-label">QR Code</label>
+                        <select name="qr_id" id="qr_id" class="form-select">
+                            <option value="">Tutti</option>
+                            {% for qr in qr_codes %}
+                            <option value="{{ qr.id }}" {% if selected_qr_id == qr.id %}selected{% endif %}>{{ qr.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="user_id" class="form-label">Utente</label>
+                        <select name="user_id" id="user_id" class="form-select">
+                            <option value="">Tutti</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if selected_user_id == user.id %}selected{% endif %}>{{ user.get_full_name() }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="operator_id" class="form-label">Operatore</label>
+                        <select name="operator_id" id="operator_id" class="form-select">
+                            <option value="">Tutti</option>
+                            {% for op in operators %}
+                            <option value="{{ op.id }}" {% if selected_operator_id == op.id %}selected{% endif %}>{{ op.get_full_name() }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_from" class="form-label">Data inizio</label>
+                        <input type="date" name="date_from" id="date_from" class="form-control" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_to" class="form-label">Data fine</label>
+                        <input type="date" name="date_to" id="date_to" class="form-control" value="{{ date_to }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i> Applica Filtri
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body p-0">
+                <div id="map"></div>
+            </div>
+            <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-primary me-2">{{ markers|length }}</span> accessi visualizzati sulla mappa
+                </div>
+                <div>
+                    <i class="fas fa-info-circle me-1"></i> Zoom sulla mappa per visualizzare meglio i punti
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Crea la mappa
+        var map = L.map('map').setView([41.9028, 12.4964], 5); // Vista iniziale sull'Italia
+        
+        // Aggiungi tile layer OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+        }).addTo(map);
+        
+        // Crea un gruppo di markers per il clustering
+        var markers = L.markerClusterGroup();
+        
+        // Dati dei markers
+        var markerData = {{ markers|tojson }};
+        
+        // Aggiungi markers alla mappa
+        if (markerData.length > 0) {
+            markerData.forEach(function(marker) {
+                var popupContent = '<div class="marker-info">' +
+                    '<h5><i class="fas fa-map-marker-alt me-1"></i> Accesso #' + marker.id + '</h5>' +
+                    '<dl>' +
+                    '<dt>Data/Ora:</dt>' +
+                    '<dd>' + marker.timestamp + '</dd>' +
+                    '<dt>QR Code:</dt>' +
+                    '<dd>' + marker.qr.description + '</dd>';
+                
+                if (marker.user) {
+                    popupContent += '<dt>Utente:</dt>' +
+                        '<dd>' + marker.user.name + '</dd>' +
+                        '<dd><small>' + marker.user.email + '</small></dd>';
+                }
+                
+                popupContent += '<dt>Operatore:</dt>' +
+                    '<dd>' + marker.operator.name + '</dd>' +
+                    '<dd><small>' + marker.operator.email + '</small></dd>' +
+                    '<dt>Coordinate:</dt>' +
+                    '<dd>' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6) + '</dd>' +
+                    '</dl>' +
+                    '<a href="https://www.google.com/maps?q=' + marker.lat + ',' + marker.lng + '" target="_blank" class="btn btn-sm btn-outline-primary">' +
+                    '<i class="fas fa-external-link-alt me-1"></i> Apri in Google Maps' +
+                    '</a>' +
+                    '</div>';
+                
+                markers.addLayer(L.marker([marker.lat, marker.lng])
+                    .bindPopup(popupContent, { maxWidth: 300 }));
+            });
+            
+            map.addLayer(markers);
+            
+            // Adatta la vista alla mappa con tutti i markers
+            if (markerData.length > 0) {
+                var bounds = L.latLngBounds(markerData.map(function(m) { return [m.lat, m.lng]; }));
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        } else {
+            // Se non ci sono marker, mostra un messaggio
+            document.getElementById('map').innerHTML = '<div class="alert alert-info text-center p-5">' +
+                '<i class="fas fa-info-circle fa-2x mb-3"></i><br>' +
+                'Nessun accesso con dati di geolocalizzazione trovato.<br>' +
+                'Prova a modificare i filtri o assicurati che gli accessi contengano coordinate geografiche.' +
+                '</div>';
+        }
+    });
+</script>
+{% endblock %} 

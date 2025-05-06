@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-qrcode me-2"></i>QR Codes</h1>
+            {% if current_user.is_operator() %}
+            <a href="{{ url_for('qr_codes.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Nuovo QR Code
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Cerca QR Code</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('qr_codes.index') }}" class="row g-3">
+                    <div class="col-md-4">
+                        {{ search_form.description.label(class="form-label") }}
+                        {{ search_form.description(class="form-control") }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ search_form.user_id.label(class="form-label") }}
+                        {{ search_form.user_id(class="form-select") }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ search_form.is_active.label(class="form-label") }}
+                        {{ search_form.is_active(class="form-select") }}
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i> Cerca
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                {% if qr_codes %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Descrizione</th>
+                                <th>Proprietario</th>
+                                <th>Data Creazione</th>
+                                <th>Scadenza</th>
+                                <th>Stato</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for qr in qr_codes %}
+                            <tr>
+                                <td>{{ qr.id }}</td>
+                                <td>{{ qr.description }}</td>
+                                <td>
+                                    {% if qr.owner %}
+                                    {{ qr.owner.get_full_name() }}
+                                    {% else %}
+                                    <span class="text-muted">QR generico</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ qr.creation_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    {% if qr.expiry_date %}
+                                    {{ qr.expiry_date.strftime('%d/%m/%Y %H:%M') }}
+                                    {% else %}
+                                    <span class="text-muted">Non impostata</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if qr.is_active %}
+                                    <span class="badge bg-success">Attivo</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Disattivato</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('qr_codes.view', id=qr.id) }}" class="btn btn-sm btn-info text-white">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if current_user.is_operator() %}
+                                        <a href="{{ url_for('qr_codes.toggle_active', id=qr.id) }}" class="btn btn-sm {% if qr.is_active %}btn-danger{% else %}btn-success{% endif %}" 
+                                           onclick="return confirm('Sei sicuro di voler {% if qr.is_active %}disattivare{% else %}attivare{% endif %} questo QR code?')">
+                                            <i class="fas {% if qr.is_active %}fa-ban{% else %}fa-check{% endif %}"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginazione -->
+                {% if pagination.pages > 1 %}
+                <nav aria-label="Paginazione QR Codes">
+                    <ul class="pagination justify-content-center">
+                        {% for page in pagination.iter_pages() %}
+                            {% if page %}
+                                {% if page != pagination.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('qr_codes.index', page=page, **request.args) }}">{{ page }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Nessun QR code trovato. 
+                    {% if current_user.is_operator() %}
+                    <a href="{{ url_for('qr_codes.create') }}">Crea il tuo primo QR code</a>.
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

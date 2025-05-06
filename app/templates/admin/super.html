@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Super Admin{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="card-header bg-danger text-white py-3">
+                    <h3 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Super Admin: Azzeramento Database</h3>
+                </div>
+                <div class="card-body bg-light">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} shadow-sm">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    {% if not authenticated %}
+                    <form method="POST" class="mb-4 p-4 rounded bg-white shadow-sm border">
+                        <div class="mb-3">
+                            <label for="pin" class="form-label fs-5">PIN di accesso</label>
+                            <input type="password" class="form-control form-control-lg" id="pin" name="pin" required autofocus placeholder="Inserisci il PIN Super Admin">
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-lg w-100">
+                            <i class="fas fa-unlock me-1"></i> Accedi
+                        </button>
+                    </form>
+                    {% else %}
+                    <form method="POST" action="{{ url_for('admin.clear_database') }}" class="mb-0">
+                        <input type="hidden" name="pin" value="{{ pin }}">
+                        <div class="alert alert-warning d-flex flex-column flex-md-row align-items-md-center justify-content-between shadow-sm border-warning mb-0">
+                            <div>
+                                <h5 class="mb-2"><i class="fas fa-database me-1"></i> Azzera Database</h5>
+                                <p class="mb-2">Questa operazione elimina tutti i dati <b>tranne gli utenti</b>.<br><span class="text-danger">Non è reversibile!</span></p>
+                            </div>
+                            <button type="submit" class="btn btn-warning fw-bold mt-3 mt-md-0" onclick="return confirm('Sei sicuro di voler azzerare il database?')">
+                                <i class="fas fa-trash"></i> Azzera Database
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if authenticated %}
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h3 class="mb-0"><i class="fas fa-database me-2"></i>Gestione Avanzata Dati</h3>
+                </div>
+                <div class="card-body bg-light">
+                    <ul class="nav nav-tabs mb-4" id="superTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="qrcodes-tab" data-bs-toggle="tab" data-bs-target="#qrcodes" type="button" role="tab">QR Code Generati</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="accesses-tab" data-bs-toggle="tab" data-bs-target="#accesses" type="button" role="tab">Accessi Registrati</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="superTabContent">
+                        <div class="tab-pane fade show active" id="qrcodes" role="tabpanel">
+                            <h5 class="mb-3">Elenco QR Code Generati</h5>
+                            <div class="table-responsive rounded shadow-sm mb-4">
+                                <table class="table table-bordered table-hover align-middle bg-white">
+                                    <thead class="table-light">
+                                        <tr class="align-middle text-center">
+                                            <th>ID</th>
+                                            <th>Descrizione</th>
+                                            <th>Utente</th>
+                                            <th>Data Creazione</th>
+                                            <th>Stato</th>
+                                            <th>Azioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for qr in qrcodes %}
+                                        <tr class="align-middle">
+                                            <td class="text-center fw-bold">{{ qr.id }}</td>
+                                            <td>{{ qr.description }}</td>
+                                            <td>
+                                                {% if qr.owner %}
+                                                    <span class="fw-semibold">{{ qr.owner.get_full_name() }}</span><br>
+                                                    <small class="text-muted">{{ qr.owner.email }}</small>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ qr.creation_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                                            <td>
+                                                {% if qr.is_active %}
+                                                    <span class="badge bg-success">Attivo</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Disattivato</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <a href="{{ url_for('qr_codes.view', id=qr.id) }}" class="btn btn-sm btn-info" title="Dettagli" data-bs-toggle="tooltip"><i class="fas fa-eye"></i></a>
+                                                <a href="{{ url_for('qr_codes.toggle_active', id=qr.id) }}" class="btn btn-sm btn-secondary" title="Attiva/Disattiva" data-bs-toggle="tooltip"><i class="fas fa-toggle-on"></i></a>
+                                                <a href="{{ url_for('admin.delete_qrcode', id=qr.id, pin=pin) }}" class="btn btn-sm btn-danger" title="Elimina QR Code" data-bs-toggle="tooltip" onclick="return confirm('Sei sicuro di voler eliminare questo QR code?')"><i class="fas fa-trash"></i></a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="accesses" role="tabpanel">
+                            <h5 class="mb-3">Ricerca e Modifica Accessi</h5>
+                            <form method="GET" action="{{ url_for('admin.search_access') }}" class="mb-3">
+                                <input type="hidden" name="pin" value="{{ pin }}">
+                                <div class="input-group mb-2">
+                                    <input type="text" name="search" class="form-control form-control-lg" placeholder="ID, nome, cognome o email utente">
+                                    <button type="submit" class="btn btn-primary btn-lg" title="Cerca">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Ricerca per ID, nome, cognome o email.</small>
+                            </form>
+                            {% if search_results %}
+                            <div class="table-responsive rounded shadow-sm">
+                                <table class="table table-bordered table-hover align-middle bg-white">
+                                    <thead class="table-light">
+                                        <tr class="align-middle text-center">
+                                            <th>ID</th>
+                                            <th>QR Code</th>
+                                            <th>Utente</th>
+                                            <th>Operatore</th>
+                                            <th>Data/Ora</th>
+                                            <th>Posizione</th>
+                                            <th>Azioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for access in search_results %}
+                                        <tr class="align-middle">
+                                            <td class="text-center fw-bold">{{ access.id }}</td>
+                                            <td>{{ access.qr_code.description }}</td>
+                                            <td>
+                                                {% if access.qr_code.owner %}
+                                                    <span class="fw-semibold">{{ access.qr_code.owner.get_full_name() }}</span><br>
+                                                    <small class="text-muted">{{ access.qr_code.owner.email }}</small>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ access.operator.get_full_name() }}</td>
+                                            <td>{{ access.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                                            <td>
+                                                {% if access.latitude and access.longitude %}
+                                                <a href="https://www.google.com/maps?q={{ access.latitude }},{{ access.longitude }}" target="_blank" data-bs-toggle="tooltip" title="Visualizza su Google Maps">
+                                                    <i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ "%.6f"|format(access.latitude) }}, {{ "%.6f"|format(access.longitude) }}
+                                                </a>
+                                                {% else %}
+                                                <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <a href="{{ url_for('admin.edit_access', access_id=access.id, pin=pin) }}" class="btn btn-sm btn-warning" title="Modifica" data-bs-toggle="tooltip"><i class="fas fa-edit"></i></a>
+                                                <a href="{{ url_for('admin.delete_access', id=access.id, pin=pin) }}" class="btn btn-sm btn-danger" title="Elimina Accesso" data-bs-toggle="tooltip" onclick="return confirm('Sei sicuro di voler eliminare questo accesso?')"><i class="fas fa-trash"></i></a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% elif search_results is not none %}
+                            <div class="alert alert-info mt-4">
+                                <i class="fas fa-info-circle me-2"></i> Nessun accesso trovato con i criteri di ricerca.
+                            </div>
+                            {% else %}
+                            <div class="alert alert-secondary mt-4">
+                                <i class="fas fa-info-circle me-2"></i> Usa la barra di ricerca per trovare accessi da modificare o eliminare.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %} 

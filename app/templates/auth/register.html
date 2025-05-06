@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-3">Registra Nuovo Utente</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('auth.register') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.nome.label(class="form-label") }}
+                                {{ form.nome(class="form-control", placeholder="Nome") }}
+                                {% for error in form.nome.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.cognome.label(class="form-label") }}
+                                {{ form.cognome(class="form-control", placeholder="Cognome") }}
+                                {% for error in form.cognome.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control", placeholder="Indirizzo email") }}
+                        {% for error in form.email.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.password.label(class="form-label") }}
+                                {{ form.password(class="form-control", placeholder="Password") }}
+                                {% for error in form.password.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.password2.label(class="form-label") }}
+                                {{ form.password2(class="form-control", placeholder="Conferma password") }}
+                                {% for error in form.password2.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('users.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Torna alla lista
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Informazioni</h5>
+                <p class="card-text">
+                    Stai registrando un nuovo utente nel sistema. L'utente avrà un ruolo di "Utente standard" 
+                    e potrà accedere al sistema con le credenziali fornite.
+                </p>
+                <p class="card-text">
+                    Gli utenti potranno essere successivamente promossi a "Operatore" o "Amministratore" 
+                    dalla pagina di gestione utenti.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %} 

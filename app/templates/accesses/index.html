@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-clipboard-list me-2"></i>Registro Accessi</h1>
+            <div>
+                <a href="{{ url_for('accesses.map_view') }}" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-map-marked-alt me-1"></i> Visualizza Mappa
+                </a>
+                <a href="{{ url_for('accesses.statistics') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-chart-bar me-1"></i> Visualizza Statistiche
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Filtra Accessi</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('accesses.index') }}" class="row g-3">
+                    <div class="col-md-3">
+                        {{ search_form.qr_id.label(class="form-label") }}
+                        {{ search_form.qr_id(class="form-select") }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ search_form.user_id.label(class="form-label") }}
+                        {{ search_form.user_id(class="form-select") }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ search_form.operator_id.label(class="form-label") }}
+                        {{ search_form.operator_id(class="form-select") }}
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i> Cerca
+                        </button>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        {{ search_form.date_from.label(class="form-label") }}
+                        {{ search_form.date_from(class="form-control", type="date") }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ search_form.date_to.label(class="form-label") }}
+                        {{ search_form.date_to(class="form-control", type="date") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                {% if accesses %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Data/Ora</th>
+                                <th>QR Code</th>
+                                <th>Utente</th>
+                                <th>Operatore</th>
+                                <th>Posizione</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for access in accesses %}
+                            <tr>
+                                <td>{{ access.id }}</td>
+                                <td>{{ access.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('qr_codes.view', id=access.qr_id) }}">
+                                        {{ access.qr_code.description }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if access.qr_code.owner %}
+                                    {{ access.qr_code.owner.get_full_name() }}
+                                    {% else %}
+                                    <span class="text-muted">QR generico</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ access.operator.get_full_name() }}</td>
+                                <td>
+                                    {% if access.latitude and access.longitude %}
+                                    <a href="https://www.google.com/maps?q={{ access.latitude }},{{ access.longitude }}" target="_blank" class="location-link" data-bs-toggle="tooltip" data-bs-placement="top" title="Clicca per visualizzare su Google Maps">
+                                        <i class="fas fa-map-marker-alt me-1"></i> {{ "%.6f"|format(access.latitude) }}, {{ "%.6f"|format(access.longitude) }}
+                                    </a>
+                                    
+                                    {% set lat_key = (access.latitude|float|round(3)) %}
+                                    {% set lng_key = (access.longitude|float|round(3)) %}
+                                    {% set coord_key = lat_key|string + "," + lng_key|string %}
+                                    
+                                    {% if coord_key in access_addresses and access_addresses[coord_key] %}
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="fas fa-building me-1"></i> {{ access_addresses[coord_key] }}
+                                    </small>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="text-muted">Non disponibile</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ access.note or '' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginazione -->
+                {% if pagination.pages > 1 %}
+                <nav aria-label="Paginazione Accessi">
+                    <ul class="pagination justify-content-center">
+                        {% for page in pagination.iter_pages() %}
+                            {% if page %}
+                                {% if page != pagination.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('accesses.index', page=page, **request.args) }}">{{ page }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Nessun accesso trovato con i criteri di ricerca specificati.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inizializza i tooltip di Bootstrap
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %}

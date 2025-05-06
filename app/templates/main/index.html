@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10 text-center">
+        <div class="py-5">
+            <h1 class="display-4">Sistema di Controllo Accessi con QR Code</h1>
+            <p class="lead mt-4">
+                Un sistema sicuro e facile da usare per monitorare e gestire gli accessi tramite codici QR univoci.
+            </p>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-qrcode fa-4x mb-3 text-primary"></i>
+                        <h3>Genera QR Code</h3>
+                        <p class="card-text">
+                            Crea facilmente codici QR univoci per utenti o accessi specifici.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-camera fa-4x mb-3 text-primary"></i>
+                        <h3>Scansiona</h3>
+                        <p class="card-text">
+                            Rileva e registra gli accessi tramite la scansione rapida dei codici.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-bar fa-4x mb-3 text-primary"></i>
+                        <h3>Statistiche</h3>
+                        <p class="card-text">
+                            Monitora gli accessi e visualizza rapporti dettagliati.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-4">
+                <i class="fas fa-sign-in-alt me-2"></i> Accedi al Sistema
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

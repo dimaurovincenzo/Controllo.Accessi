@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mb-4">
+    <div class="col-md-6 text-center">
+        <img src="{{ url_for('static', filename='img/icons/icon-192x192.png') }}" 
+             alt="Logo Sistema Accessi" 
+             class="img-fluid mb-3" 
+             style="max-height: 100px; width: auto;">
+        <h1 class="display-5">Dashboard</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card border-primary h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-qrcode fa-3x mb-3 text-primary"></i>
+                <h4 class="card-title">QR Code</h4>
+                <p class="card-text">Genera e gestisci i tuoi codici QR</p>
+                <a href="{{ url_for('qr_codes.index') }}" class="btn btn-primary mt-2">
+                    <i class="fas fa-arrow-right me-1"></i> Vai ai QR Code
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card border-success h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-camera fa-3x mb-3 text-success"></i>
+                <h4 class="card-title">Scansiona</h4>
+                <p class="card-text">Scansiona un QR code per registrare un accesso</p>
+                <a href="{{ url_for('qr_codes.scan') }}" class="btn btn-success mt-2">
+                    <i class="fas fa-camera me-1"></i> Scansiona
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card border-info h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clipboard-list fa-3x mb-3 text-info"></i>
+                <h4 class="card-title">Accessi</h4>
+                <p class="card-text">Visualizza lo storico degli accessi</p>
+                <a href="{{ url_for('accesses.index') }}" class="btn btn-info mt-2 text-white">
+                    <i class="fas fa-list me-1"></i> Visualizza
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card border-warning h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-bar fa-3x mb-3 text-warning"></i>
+                <h4 class="card-title">Statistiche</h4>
+                <p class="card-text">Analizza le statistiche di accesso</p>
+                <a href="{{ url_for('accesses.statistics') }}" class="btn btn-warning mt-2">
+                    <i class="fas fa-chart-line me-1"></i> Statistiche
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_admin() %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h2 class="mb-3">Amministrazione</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card border-danger h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x mb-3 text-danger"></i>
+                <h4 class="card-title">Gestione Utenti</h4>
+                <p class="card-text">Gestisci gli utenti del sistema</p>
+                <a href="{{ url_for('users.index') }}" class="btn btn-danger mt-2">
+                    <i class="fas fa-users-cog me-1"></i> Gestisci
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card border-secondary h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-user-plus fa-3x mb-3 text-secondary"></i>
+                <h4 class="card-title">Crea Nuovo Utente</h4>
+                <p class="card-text">Registra un nuovo utente nel sistema</p>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-secondary mt-2">
+                    <i class="fas fa-user-plus me-1"></i> Crea
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %} 

@@ -1,0 +1,55 @@
+{% extends 'auth/base_login.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4 text-center mb-4">
+        <img src="{{ url_for('static', filename='img/icons/icon-192x192.png') }}" 
+             alt="Logo Sistema Accessi" 
+             class="img-fluid mb-4" 
+             style="max-height: 150px; width: auto;">
+        <h2 class="mb-4">Sistema di Controllo Accessi</h2>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control", placeholder="Inserisci la tua email") }}
+                        {% for error in form.email.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3" x-data="{ showPassword: false }">
+                        {{ form.password.label(class="form-label") }}
+                        <div class="input-group">
+                            <input :type="showPassword ? 'text' : 'password'" 
+                                   class="form-control" 
+                                   name="password" 
+                                   placeholder="Inserisci la password">
+                            <button @click="showPassword = !showPassword" 
+                                    class="btn btn-outline-secondary" 
+                                    type="button">
+                                <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                            </button>
+                        </div>
+                        {% for error in form.password.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

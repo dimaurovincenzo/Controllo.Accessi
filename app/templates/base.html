@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="it" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if title %}{{ title }} - {% endif %}Sistema di Controllo Accessi</title>
+    
+    <!-- Meta tag per PWA -->
+    <meta name="description" content="Sistema per il controllo degli accessi tramite QR Code">
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="QR Access">
+    
+    <!-- Icone per iOS -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icons/icon-152x152.png') }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/icons/icon-152x152.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='img/icons/icon-192x192.png') }}">
+    
+    <!-- Icona standard e favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/icons/icon-72x72.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/icons/icon-72x72.png') }}">
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- Bootstrap 5 CSS via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <!-- CSS personalizzato -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Alpine.js via CDN -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Extra head content -->
+    {% block head %}{% endblock %}
+</head>
+<body class="d-flex flex-column h-100">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                    <img src="{{ url_for('static', filename='img/icons/icon-72x72.png') }}" 
+                         alt="Logo" 
+                         style="height: 30px; width: auto; margin-right: 10px;">
+                    Sistema QR Access
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        {% if current_user.is_authenticated %}
+                            {% if current_user.role == 'user' %}
+                            <!-- Solo scansione per utenti normali -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('qr_codes.scan') }}">
+                                    <i class="fas fa-camera me-1"></i> Scansiona
+                                </a>
+                            </li>
+                            {% else %}
+                            <!-- Menu completo per operatori e admin -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('main.dashboard') }}">
+                                    <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('qr_codes.scan') }}">
+                                    <i class="fas fa-camera me-1"></i> Scansiona
+                                </a>
+                            </li>
+                            {% if current_user.is_operator() %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('qr_codes.index') }}">
+                                    <i class="fas fa-qrcode me-1"></i> QR Codes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('accesses.index') }}">
+                                    <i class="fas fa-clipboard-list me-1"></i> Accessi
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if current_user.is_admin() %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('users.index') }}">
+                                    <i class="fas fa-users me-1"></i> Utenti
+                                </a>
+                            </li>
+                            {% if current_user.is_super_admin() %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin.super_admin') }}">
+                                    <i class="fas fa-shield-alt me-1"></i> Super Admin
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </ul>
+                    <ul class="navbar-nav">
+                        {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <button id="install-button" class="btn btn-light btn-sm me-2 d-none">
+                                <i class="fas fa-download me-1"></i> Installa App
+                            </button>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i> {{ current_user.nome }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('auth.change_password') }}">
+                                        <i class="fas fa-key me-1"></i> Cambia Password
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                        <i class="fas fa-sign-out-alt me-1"></i> Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <button id="install-button" class="btn btn-light btn-sm me-2 d-none">
+                                <i class="fas fa-download me-1"></i> Installa App
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.login') }}">
+                                <i class="fas fa-sign-in-alt me-1"></i> Accedi
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-shrink-0 py-4">
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="row">
+                <div class="col-md-12">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <span class="text-muted">Sistema di Controllo Accessi con QR Code &copy; {{ now.year }}</span>
+                </div>
+                <div class="col-md-6 text-end">
+                    <span class="text-muted">Versione 1.0.0</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Script PWA -->
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    <!-- Extra scripts content -->
+    {% block scripts %}{% endblock %}
+</body>
+</html> 
