@@ -17,7 +17,15 @@ def index():
     page = request.args.get('page', 1, type=int)
     per_page = 20
     
-    query = Access.query.join(QRCode)
+    # Solo admin/operator/super_admin possono vedere tutti gli accessi
+    if not current_user.is_admin() and not current_user.is_operator() and not current_user.is_super_admin():
+        # Utente normale: mostra solo accessi dove è operatore o relativi ai suoi QR code
+        query = Access.query.join(QRCode).filter(
+            (Access.operator_id == current_user.id) |
+            (QRCode.user_id == current_user.id)
+        )
+    else:
+        query = Access.query.join(QRCode)
     
     # Filtraggio per QR code
     if search_form.qr_id.data and search_form.qr_id.data != 0:
@@ -69,6 +77,11 @@ def index():
 @bp.route('/statistics')
 @login_required
 def statistics():
+    # Solo admin/operator/super_admin possono vedere le statistiche globali
+    if not current_user.is_admin() and not current_user.is_operator() and not current_user.is_super_admin():
+        flash('Accesso negato. Solo gli amministratori possono vedere le statistiche.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
     # Periodo predefinito: ultimo mese
     end_date = date.today()
     start_date = end_date - timedelta(days=30)
@@ -205,6 +218,11 @@ def edit_access(access_id):
 @bp.route('/map')
 @login_required
 def map_view():
+    # Solo admin/operator/super_admin possono vedere la mappa degli accessi
+    if not current_user.is_admin() and not current_user.is_operator() and not current_user.is_super_admin():
+        flash('Accesso negato. Solo gli amministratori possono vedere la mappa degli accessi.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
     """
     Visualizza una mappa con tutti gli accessi geolocalizzati
     """

@@ -4,13 +4,23 @@ Un sistema web moderno per gestire gli accessi tramite QR code. Sviluppato con F
 
 ---
 
+## Screenshot
+
+<div align="center">
+  <img src="screenshot/login.png" alt="Login" width="350" style="margin: 10px; border-radius: 8px; box-shadow: 0 2px 8px #ccc;">
+  <img src="screenshot/Dasboard.png" alt="Dashboard" width="350" style="margin: 10px; border-radius: 8px; box-shadow: 0 2px 8px #ccc;">
+  <img src="screenshot/Statistiche.png" alt="Statistiche" width="350" style="margin: 10px; border-radius: 8px; box-shadow: 0 2px 8px #ccc;">
+</div>
+
+---
+
 ## Indice
 
 1. [Caratteristiche principali](#caratteristiche-principali)
 2. [Requisiti](#requisiti)
 3. [Struttura del progetto](#struttura-del-progetto)
 4. [Installazione e configurazione](#installazione-e-configurazione)
-5. [Avvio dell’applicazione](#avvio-dellapplicazione)
+5. [Avvio dell'applicazione](#avvio-dellapplicazione)
 6. [Utenti di default](#utenti-di-default)
 7. [Ruoli e permessi](#ruoli-e-permessi)
 8. [Funzionalità avanzate](#funzionalit%C3%A0-avanzate)
@@ -60,7 +70,7 @@ controllo-accessi-flask/
 │   ├── main/                  # Dashboard e home
 │   ├── static/                # CSS, JS, immagini, manifest.json
 │   └── templates/             # Template Jinja2
-├── config.py                  # Configurazioni dell’app
+├── config.py                  # Configurazioni dell'app
 ├── requirements.txt           # Dipendenze Python
 ├── run.py                     # Avvio applicazione
 ├── setup_db.py                # Inizializzazione/reset DB
@@ -98,7 +108,7 @@ controllo-accessi-flask/
 
 ---
 
-## Avvio dell’applicazione
+## Avvio dell'applicazione
 
 ```bash
 flask run
